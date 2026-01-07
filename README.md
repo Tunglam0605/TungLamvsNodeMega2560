@@ -1,3 +1,10 @@
+<p align="center">
+  <img src="docs/hero.svg" alt="Stack light hero" width="1000">
+</p>
+<p align="center">
+  <img src="docs/intro-icons.svg" alt="Feature icons" width="1000">
+</p>
+
 # TungLamvsNodeMega2560
 Stack Light + Siren Controller for Arduino Mega 2560
 
