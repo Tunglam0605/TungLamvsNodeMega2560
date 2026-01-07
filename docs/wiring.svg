@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1000" height="600" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8f6f0"/>
+      <stop offset="1" stop-color="#eef4f8"/>
+    </linearGradient>
+    <style>
+      .title { font: bold 20px "Segoe UI", Arial, sans-serif; fill: #111; }
+      .subtitle { font: 14px "Segoe UI", Arial, sans-serif; fill: #333; }
+      .pin { font: 14px "Segoe UI", Arial, sans-serif; fill: #e6e6e6; }
+      .label { font: 13px "Segoe UI", Arial, sans-serif; fill: #111; }
+      .small { font: 12px "Segoe UI", Arial, sans-serif; fill: #333; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="600" fill="url(#bg)"/>
+
+  <text x="40" y="35" class="title">Arduino Mega 2560 Stack Light Wiring</text>
+  <text x="40" y="55" class="subtitle">D22/D24/D26/D28 -> drivers -> stack light + siren (12-24V)</text>
+
+  <rect x="40" y="80" width="320" height="460" rx="16" fill="#2b2b2b" stroke="#111" stroke-width="2"/>
+  <text x="70" y="115" class="pin">Arduino Mega 2560</text>
+
+  <text x="70" y="155" class="pin">D22  (Green)</text>
+  <text x="70" y="205" class="pin">D24  (Yellow)</text>
+  <text x="70" y="255" class="pin">D26  (Red)</text>
+  <text x="70" y="305" class="pin">D28  (Siren)</text>
+  <text x="70" y="365" class="pin">GND  (Common)</text>
+  <text x="70" y="415" class="pin">D13  (Heartbeat LED)</text>
+
+  <rect x="440" y="110" width="230" height="230" rx="14" fill="#ffffff" stroke="#333" stroke-width="2"/>
+  <text x="460" y="140" class="label">Stack Light (12-24V)</text>
+  <rect x="470" y="160" width="170" height="40" rx="8" fill="#38b24a" stroke="#2a7a35"/>
+  <text x="540" y="186" class="label">Green</text>
+  <rect x="470" y="210" width="170" height="40" rx="8" fill="#f2d024" stroke="#c4a21a"/>
+  <text x="540" y="236" class="label">Yellow</text>
+  <rect x="470" y="260" width="170" height="40" rx="8" fill="#e0493a" stroke="#a83228"/>
+  <text x="540" y="286" class="label">Red</text>
+
+  <rect x="440" y="370" width="230" height="120" rx="14" fill="#fff3e0" stroke="#333" stroke-width="2"/>
+  <text x="490" y="405" class="label">Siren (12-24V)</text>
+  <text x="470" y="430" class="small">via relay/MOSFET</text>
+
+  <rect x="720" y="160" width="230" height="140" rx="14" fill="#eaf4ff" stroke="#333" stroke-width="2"/>
+  <text x="740" y="195" class="label">12-24V Supply</text>
+  <text x="740" y="220" class="small">+V -> loads</text>
+  <text x="740" y="240" class="small">GND -> common</text>
+
+  <text x="380" y="105" class="small">Use relay/MOSFET + flyback diode</text>
+
+  <line x1="360" y1="150" x2="440" y2="180" stroke="#38b24a" stroke-width="3"/>
+  <line x1="360" y1="200" x2="440" y2="230" stroke="#f2d024" stroke-width="3"/>
+  <line x1="360" y1="250" x2="440" y2="280" stroke="#e0493a" stroke-width="3"/>
+  <line x1="360" y1="300" x2="440" y2="420" stroke="#555" stroke-width="3"/>
+
+  <line x1="360" y1="360" x2="720" y2="240" stroke="#222" stroke-width="2"/>
+  <text x="380" y="355" class="small">Common GND</text>
+
+  <line x1="670" y1="200" x2="720" y2="200" stroke="#999" stroke-width="2"/>
+  <line x1="670" y1="230" x2="720" y2="230" stroke="#999" stroke-width="2"/>
+  <text x="680" y="200" class="small">+V</text>
+  <text x="680" y="230" class="small">GND</text>
+
+  <circle cx="360" cy="150" r="4" fill="#38b24a"/>
+  <circle cx="360" cy="200" r="4" fill="#f2d024"/>
+  <circle cx="360" cy="250" r="4" fill="#e0493a"/>
+  <circle cx="360" cy="300" r="4" fill="#555"/>
+  <circle cx="360" cy="360" r="4" fill="#222"/>
+</svg>
