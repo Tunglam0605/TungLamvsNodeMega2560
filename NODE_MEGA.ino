@@ -90,6 +90,7 @@ volatile bool     beepJustDone = false; // ISR báo vừa beep xong, loop in ACK
 volatile uint32_t hbAccMs = 0;
 volatile bool     hbState = false;
 volatile bool     hbDirty = true;
+volatile uint32_t sysMs = 0; // 10 ms tick from Timer3
 
 /*─────────────────────────────────────────────────────────────────────────────
   5) TRẠNG THÁI CAO CẤP (theo yêu cầu đồng bộ với node ROS 2)
@@ -114,6 +115,28 @@ NavState currentState = ST_IDLE;
 char     lineBuf[LINE_BUF_SIZE] = {0};
 size_t   lineLen = 0;
 uint32_t lastRx  = 0;
+
+// Buttons A/B/C on D18/D19/D20 using external interrupts (INT3/INT2/INT1).
+constexpr uint8_t  BTN_A_PIN        = 18; // INT3 / PD3
+constexpr uint8_t  BTN_B_PIN        = 19; // INT2 / PD2
+constexpr uint8_t  BTN_C_PIN        = 20; // INT1 / PD1
+constexpr bool     BTN_ACTIVE_LOW   = true;
+constexpr uint16_t BTN_DEBOUNCE_MS  = 30;
+
+constexpr uint8_t BTN_A_EVT_BIT = 0;
+constexpr uint8_t BTN_B_EVT_BIT = 1;
+constexpr uint8_t BTN_C_EVT_BIT = 2;
+
+constexpr uint8_t BTN_EVT_A = (1 << BTN_A_EVT_BIT);
+constexpr uint8_t BTN_EVT_B = (1 << BTN_B_EVT_BIT);
+constexpr uint8_t BTN_EVT_C = (1 << BTN_C_EVT_BIT);
+
+constexpr uint8_t BTN_A_PIN_MASK = (1 << 3); // PD3
+constexpr uint8_t BTN_B_PIN_MASK = (1 << 2); // PD2
+constexpr uint8_t BTN_C_PIN_MASK = (1 << 1); // PD1
+
+volatile uint8_t  btnEventMask = 0;
+volatile uint32_t btnLastEventMs[3] = {0, 0, 0};
 
 /*─────────────────────────────────────────────────────────────────────────────
   7) TIỆN ÍCH I/O
@@ -174,6 +197,7 @@ void setBlinkAntiPhase(Channel& a, Channel& b, uint16_t period_ms) {
 /// ISR: cập nhật kênh đèn, BEEP, heartbeat — KHÔNG gọi Serial.print() trong ISR!
 ISR(TIMER3_COMPA_vect) {
   constexpr uint16_t DT = 10; // ms mỗi tick
+  sysMs += DT;
 
   // Đèn nháy/ổn định
   tickChannel(chGreen,  DT);
@@ -408,6 +432,45 @@ void handleLine(char* line) {
 /*─────────────────────────────────────────────────────────────────────────────
   12) SETUP: khởi tạo GPIO, Serial, Timer3
 ──────────────────────────────────────────────────────────────────────────────*/
+inline void handleButtonIsr(uint8_t idx, uint8_t pinMask, uint8_t evtMask) {
+  uint8_t raw = (uint8_t)(PIND & pinMask);
+  bool pressed = BTN_ACTIVE_LOW ? (raw == 0) : (raw != 0);
+  if (!pressed) return;
+
+  uint32_t now = sysMs;
+  if ((uint32_t)(now - btnLastEventMs[idx]) < BTN_DEBOUNCE_MS) return;
+
+  btnLastEventMs[idx] = now;
+  btnEventMask |= evtMask;
+}
+
+ISR(INT3_vect) { handleButtonIsr(0, BTN_A_PIN_MASK, BTN_EVT_A); }
+ISR(INT2_vect) { handleButtonIsr(1, BTN_B_PIN_MASK, BTN_EVT_B); }
+ISR(INT1_vect) { handleButtonIsr(2, BTN_C_PIN_MASK, BTN_EVT_C); }
+
+void setupButtonsExtInt() {
+  const uint8_t mask = (uint8_t)(BTN_A_PIN_MASK | BTN_B_PIN_MASK | BTN_C_PIN_MASK);
+  DDRD &= (uint8_t)~mask;
+  if (BTN_ACTIVE_LOW) { PORTD |= mask; } else { PORTD &= (uint8_t)~mask; }
+
+  noInterrupts();
+  uint8_t eicra = EICRA;
+  eicra &= (uint8_t)~((1 << ISC10) | (1 << ISC11) |
+                      (1 << ISC20) | (1 << ISC21) |
+                      (1 << ISC30) | (1 << ISC31));
+  if (BTN_ACTIVE_LOW) {
+    eicra |= (1 << ISC11) | (1 << ISC21) | (1 << ISC31); // falling edge
+  } else {
+    eicra |= (1 << ISC10) | (1 << ISC11) |
+             (1 << ISC20) | (1 << ISC21) |
+             (1 << ISC30) | (1 << ISC31); // rising edge
+  }
+  EICRA = eicra;
+  EIFR  |= (1 << INTF1) | (1 << INTF2) | (1 << INTF3);
+  EIMSK |= (1 << INT1) | (1 << INT2) | (1 << INT3);
+  interrupts();
+}
+
 void setup() {
   // GPIO
   pinMode(PIN_GREEN,  OUTPUT);
@@ -429,6 +492,9 @@ void setup() {
 
   // Timer3 100 Hz
   setupTimer3_100Hz();
+
+  // Buttons A/B/C external interrupts
+  setupButtonsExtInt();
 
   // Mốc liên lạc ban đầu + trạng thái ban đầu
   lastRx = millis();
@@ -463,6 +529,14 @@ void loop() {
 
   /* 13.3) In ACK khi BEEP kết thúc (tránh in trong ISR) */
   if (beepJustDone) { beepJustDone = false; Serial.println(F("ACK:BEEP_DONE")); }
+  uint8_t btnEvt = 0;
+  noInterrupts();
+  btnEvt = btnEventMask;
+  btnEventMask = 0;
+  interrupts();
+  if (btnEvt & BTN_EVT_A) Serial.println(F("EVT:BTN=A"));
+  if (btnEvt & BTN_EVT_B) Serial.println(F("EVT:BTN=B"));
+  if (btnEvt & BTN_EVT_C) Serial.println(F("EVT:BTN=C"));
 
   /* 13.4) Fail-safe: nếu quá LINK_TIMEOUT_MS không nhận lệnh → về IDLE
      - Chỉ in cảnh báo & apply một lần cho mỗi lần timeout. */

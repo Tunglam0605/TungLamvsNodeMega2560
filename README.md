@@ -30,6 +30,9 @@ thanks to a 100 Hz Timer3 ISR (no `delay()` in the main loop).
 | Red lamp | D26 | Stack light red channel via relay/MOSFET |
 | Siren | D28 | Siren via relay/MOSFET |
 | Heartbeat | D13 | On-board LED (built-in) |
+| Button A | D18 (INT3) | Momentary button to GND (active-low, pull-up) |
+| Button B | D19 (INT2) | Momentary button to GND (active-low, pull-up) |
+| Button C | D20 (INT1) | Momentary button to GND (active-low, pull-up) |
 | GND | GND | Common ground with external supply |
 
 ### 🧷 <span style="color:#3b82f6; text-shadow:0 0 8px #bfdbfe;">Wiring diagram</span>
@@ -40,6 +43,8 @@ thanks to a 100 Hz Timer3 ISR (no `delay()` in the main loop).
 - Do NOT connect 12-24 V directly to Arduino pins.
 - All grounds must be common: Arduino GND <-> driver GND <-> power supply GND.
 - `ACTIVE_LEVEL` is set to `HIGH`. If your driver is active-low, change it to `LOW`.
+- Buttons use internal pull-ups (active-low). Wire each button between pin and GND.
+- D18/D19/D20 are also Serial1 (TX1/RX1) and I2C (SDA on D20). Avoid conflicts.
 
 ## 🌈 <span style="color:#ec4899; text-shadow:0 0 10px #fbcfe8;">State mapping</span>
 | State | Green | Yellow | Red | Siren |
@@ -69,6 +74,7 @@ SET <COLOR> <ON|OFF|BLINK> [period_ms]   (COLOR: GREEN|YELLOW|RED)
 ### ✅ <span style="color:#10b981; text-shadow:0 0 8px #bbf7d0;">Responses</span>
 - `ACK:STATE=...`, `ACK:SIREN=...`, `ACK:BEEP=...`, `ACK:SET ...`
 - `ACK:BEEP_DONE` when a timed beep finishes
+- `EVT:BTN=A|B|C` when a button is pressed
 - `ERR:...` for invalid commands
 
 ## ⏱️ <span style="color:#84cc16; text-shadow:0 0 10px #ecfccb;">Defaults and timing</span>
@@ -79,6 +85,7 @@ SET <COLOR> <ON|OFF|BLINK> [period_ms]   (COLOR: GREEN|YELLOW|RED)
 | `HEARTBEAT_MS` | 1000 |
 | `BLINK_SLOW_MS` | 600 |
 | `BLINK_FAST_MS` | 200 |
+| `BTN_DEBOUNCE_MS` | 30 |
 
 ## ⬆️ <span style="color:#2563eb; text-shadow:0 0 10px #bfdbfe;">Build and upload</span>
 1. Open `NODE_MEGA.ino` in Arduino IDE.
